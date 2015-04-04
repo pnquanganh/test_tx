@@ -352,12 +352,6 @@ int main(int argc, const char* argv[])
 
 
   printf("Start\n");
-  original_test<<<blocksPerGrid, threadsPerBlock>>>(num_levels,
-						    d_level_ptr,
-						    d_vertices_ptr,
-						    d_data,
-						    d_edges,
-						    d_tmp_output);
 
   test_build_hashtable<<<blocksPerGrid, threadsPerBlock>>>( num_levels,
 							    d_level_ptr,
