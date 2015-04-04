@@ -11,6 +11,9 @@ using namespace std;
 #define CHUNK_SIZE 2000
 #define HASH_SIZE 1000
 
+#define BLOCK_SIZE 512
+#define ACTIVE_THREADS BLOCK_SIZE/32
+
 __global__ void original_test(int num_level,
 			     int *d_level_ptr,
 			     int *d_vertices_ptr,
@@ -51,11 +54,11 @@ __global__ void original_test(int num_level,
 __device__ int scan(int lane, int *vals, int carried_val)
 {
   if (lane == 0) vals[lane] += carried_val;
-  if (lane >= 1) vals[lane] += vals[lane - 1];
-  if (lane >= 2) vals[lane] += vals[lane - 2];
-  if (lane >= 4) vals[lane] += vals[lane - 4];
-  if (lane >= 8) vals[lane] += vals[lane - 8];
-  if (lane >= 16) vals[lane] += vals[lane - 16];
+  if (lane >= 1 && lane < ACTIVE_THREADS) vals[lane] += vals[lane - 1];
+  if (lane >= 2 && lane < ACTIVE_THREADS) vals[lane] += vals[lane - 2];
+  if (lane >= 4 && lane < ACTIVE_THREADS) vals[lane] += vals[lane - 4];
+  if (lane >= 8 && lane < ACTIVE_THREADS) vals[lane] += vals[lane - 8];
+  if (lane >= 16 && lane < ACTIVE_THREADS) vals[lane] += vals[lane - 16];
   return vals[31];
 }
 
@@ -103,7 +106,7 @@ __global__ void test_build_hashtable(int num_levels,
 				     int *d_chunk_level_ptr,
 				     int *d_chunk_ptr)
 {
-  __shared__ int shared_vals[32];
+  __shared__ int shared_vals[ACTIVE_THREADS];
   volatile __shared__ int chunk_id[1];
   volatile __shared__ int next_chunk_id[1];
   volatile __shared__ int hash_indices[HASH_SIZE];
@@ -205,7 +208,7 @@ int main(int argc, const char* argv[])
 {
   cudaError_t err = cudaSuccess;
   int blocksPerGrid = 1;
-  int threadsPerBlock = 1024;
+  int threadsPerBlock = BLOCK_SIZE;
   int num_vertices = 0, num_edges = 0;
   int *vertices_ptr = NULL;
   int *edges = NULL;
