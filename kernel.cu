@@ -383,7 +383,7 @@ int main(int argc, const char* argv[])
   err =  cudaDeviceSynchronize();
   if (err != cudaSuccess)
     {
-      fprintf(stderr, "error code 11 %s\n", cudaGetErrorString(err));
+      fprintf(stderr, "error code 12 %s\n", cudaGetErrorString(err));
       goto EXIT;
     }
 
