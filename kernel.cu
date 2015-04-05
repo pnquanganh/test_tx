@@ -373,6 +373,13 @@ int main(int argc, const char* argv[])
 							    d_chunk_level_ptr,
 							    d_chunk_ptr);
 
+  err =  cudaDeviceSynchronize();
+  if (err != cudaSuccess)
+    {
+      fprintf(stderr, "error code 11 %s\n", cudaGetErrorString(err));
+      exit(1);
+    }
+
   if (vertices_ptr != NULL) delete[] vertices_ptr;
   if (edges != NULL) delete[] edges;
   if (level_ptr != NULL) delete[] level_ptr;
