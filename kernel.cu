@@ -362,6 +362,13 @@ int main(int argc, const char* argv[])
 // 						    d_edges,
 // 						    d_tmp_output);
 
+  err =  cudaDeviceSynchronize();
+  if (err != cudaSuccess)
+    {
+      fprintf(stderr, "error code 11 %s\n", cudaGetErrorString(err));
+      goto EXIT;
+    }
+
   test_build_hashtable<<<blocksPerGrid, threadsPerBlock>>>( num_levels,
 							    d_level_ptr,
 							    d_vertices_ptr,
