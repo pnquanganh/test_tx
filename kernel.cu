@@ -241,27 +241,27 @@ int main(int argc, const char* argv[])
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code -1 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
   err = cudaMemcpy(d_vertices_ptr, vertices_ptr, (num_vertices + 1) * sizeof(int), cudaMemcpyHostToDevice);
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 0 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
   err = cudaMalloc((void **)&d_edges, num_edges * sizeof(int));
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 1 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
   err = cudaMemcpy(d_edges, edges, num_edges * sizeof(int), cudaMemcpyHostToDevice);
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 2 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
   f = fopen(argv[2], "r");
@@ -295,62 +295,62 @@ int main(int argc, const char* argv[])
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 3 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
   err = cudaMemcpy(d_level_ptr, level_ptr, (num_levels + 1) * sizeof(int), cudaMemcpyHostToDevice);
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 4 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
   err = cudaMalloc((void **)&d_data, total_size * sizeof(int));
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 5 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
   err = cudaMemcpy(d_data, data, total_size * sizeof(int), cudaMemcpyHostToDevice);
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 6 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
   err = cudaMalloc((void **)&d_tmp_output, (total_size * 3) * sizeof(int));
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 1 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
   err = cudaMalloc((void **)&d_hash_indices, 2 * total_size * sizeof(int));
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 7 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
   err = cudaMalloc((void **)&d_hash_values, 2 * total_size * sizeof(int));
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 8 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
   err = cudaMalloc((void **)&d_chunk_level_ptr, (num_levels + 1) * sizeof(int));
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 9 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
   err = cudaMalloc((void **)&d_chunk_ptr, total_size * sizeof(int));
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 10 %s\n", cudaGetErrorString(err));
-      exit(1);
+      goto EXIT;
     }
 
 
@@ -377,9 +377,11 @@ int main(int argc, const char* argv[])
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 11 %s\n", cudaGetErrorString(err));
-      //exit(1);
+      goto EXIT;
     }
 
+EXIT:
+  fflush(stdout);
   if (vertices_ptr != NULL) delete[] vertices_ptr;
   if (edges != NULL) delete[] edges;
   if (level_ptr != NULL) delete[] level_ptr;
