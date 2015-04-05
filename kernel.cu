@@ -59,7 +59,7 @@ __device__ int scan(int lane, int *vals, int carried_val)
   if (lane >= 4 && lane < ACTIVE_THREADS) vals[lane] += vals[lane - 4];
   if (lane >= 8 && lane < ACTIVE_THREADS) vals[lane] += vals[lane - 8];
   if (lane >= 16 && lane < ACTIVE_THREADS) vals[lane] += vals[lane - 16];
-  return vals[31];
+  return vals[ACTIVE_THREADS - 1];
 }
 
 __device__ void clean_hashtable(volatile int *hash_indices, int *hash_values)
