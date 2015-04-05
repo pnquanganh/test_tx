@@ -377,7 +377,7 @@ int main(int argc, const char* argv[])
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 11 %s\n", cudaGetErrorString(err));
-      exit(1);
+      //exit(1);
     }
 
   if (vertices_ptr != NULL) delete[] vertices_ptr;
