@@ -125,6 +125,7 @@ __global__ void test_build_hashtable(int num_levels,
   if (threadIdx.x == 0)
   {
     chunk_id[0] = 0;
+	next_chunk_id[0] = 0;
     d_chunk_level_ptr[0] = 0;
     d_chunk_ptr[0] = 0;
   }
