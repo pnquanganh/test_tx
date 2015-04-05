@@ -230,11 +230,19 @@ int main(int argc, const char* argv[])
 
   vertices_ptr = new int[num_vertices + 1];
   for (int i = 0; i < num_vertices + 1; i++)
+  {
+	  if (i % 100000 == 0) printf("\r%d", i);
     fscanf(f, "%d", &vertices_ptr[i]);
+  }
+  printf("\n");
 
   edges = new int[num_edges];
   for (int i = 0; i < num_edges; i++)
+  {
+	  if (i % 1000000 == 0) printf("\r%d", i);
     fscanf(f, "%d", &edges[i]);
+  }
+  printf("\n");
 
   fclose(f);
   err = cudaMalloc((void **)&d_vertices_ptr, (num_vertices + 1) * sizeof(int));
@@ -276,6 +284,8 @@ int main(int argc, const char* argv[])
 
   for (int i = 0; i < num_levels; i++)
     {
+	  if (i % 10 == 0) printf("\r%d", i);
+
       level_ptr[i] = count;
       int list_size = 0;
       fscanf(f, "%d", &list_size);
@@ -288,6 +298,7 @@ int main(int argc, const char* argv[])
       count += list_size;
 
     }
+  printf("\n");
   level_ptr[num_levels] = total_size;
   fclose(f);
 
