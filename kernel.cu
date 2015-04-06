@@ -3,6 +3,7 @@
 #include "device_launch_parameters.h"
 
 #include <stdio.h>
+#include <conio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -135,9 +136,7 @@ __global__ void test_build_hashtable(int num_levels,
   for (int level_id = 0; level_id < num_levels; level_id++)
     {
       int start_level_ptr = d_level_ptr[level_id];
-
       int last_level_ptr = d_level_ptr[level_id + 1];
-
 
       for (int data_ptr = start_level_ptr + global_warp_id; data_ptr < last_level_ptr; data_ptr += total_warps)
 	{
@@ -239,7 +238,11 @@ int main(int argc, const char* argv[])
   int *d_chunk_level_ptr = NULL;
   int *d_chunk_ptr = NULL;
 
-  FILE *f = fopen(argv[1], "r");
+  const char *f1 = "E:\\Projects\\BFS\\BFS\\europe.csr";
+  const char *f2 = "E:\\Projects\\BFS\\BFS\\recorded_levels.txt";
+
+  printf("Read file %s\n", f1);
+  FILE *f = fopen(f1, "r");
   fscanf(f, "%d %d", &num_vertices, &num_edges);
 
   vertices_ptr = new int[num_vertices + 1];
@@ -259,6 +262,9 @@ int main(int argc, const char* argv[])
   printf("\n");
 
   fclose(f);
+
+  printf("Finish file %s\n", f1);
+
   err = cudaMalloc((void **)&d_vertices_ptr, (num_vertices + 1) * sizeof(int));
   if (err != cudaSuccess)
     {
@@ -285,8 +291,10 @@ int main(int argc, const char* argv[])
       fprintf(stderr, "error code 2 %s\n", cudaGetErrorString(err));
       goto EXIT;
     }
+  
+  printf("Read file %s\n", f2);
 
-  f = fopen(argv[2], "r");
+  f = fopen(f2, "r");
   int first_level = 0, last_level = 0;
   fscanf(f, "%d %d", &first_level, &last_level);
   int num_levels = last_level - first_level;
@@ -296,6 +304,8 @@ int main(int argc, const char* argv[])
   data = new int[total_size];
   int count = 0;
 
+  int max_degree = 0;
+  int histogram[11] = {0};
   for (int i = 0; i < num_levels; i++)
     {
 	  if (i % 10 == 0) printf("\r%d", i);
@@ -308,13 +318,26 @@ int main(int argc, const char* argv[])
 	  int tmp = 0;
 	  fscanf(f, "%d", &tmp);
 	  data[count + j] = tmp;
+	  int tmp_degree = vertices_ptr[tmp + 1] - vertices_ptr[tmp];
+	  max_degree = tmp_degree > max_degree ? tmp_degree : max_degree;
+	  if (tmp_degree <= 10)
+		  histogram[tmp_degree - 1]++;
+	  else
+		  histogram[10]++;
 	}
       count += list_size;
 
     }
-  printf("\n");
+  printf("\nmax degree: %d\n", max_degree);
+  printf("histogram:\n");
+  for (int i = 0; i < 10; i++)
+	  printf("Degree %d: %d\n", i + 1, histogram[i]);
+  printf("Degree 10+: %d\n", histogram[10]);
   level_ptr[num_levels] = total_size;
   fclose(f);
+
+  printf("Finish file %s\n", f2);
+      /*goto EXIT;*/
 
   err = cudaMalloc((void **)&d_level_ptr, (num_levels + 1) * sizeof(int));
   if (err != cudaSuccess)
@@ -343,21 +366,21 @@ int main(int argc, const char* argv[])
       goto EXIT;
     }
 
-  err = cudaMalloc((void **)&d_tmp_output, (total_size * 3) * sizeof(int));
+  err = cudaMalloc((void **)&d_tmp_output, (total_size * 4) * sizeof(int));
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 1 %s\n", cudaGetErrorString(err));
       goto EXIT;
     }
 
-  err = cudaMalloc((void **)&d_hash_indices, 2 * total_size * sizeof(int));
+  err = cudaMalloc((void **)&d_hash_indices, 10 * total_size * sizeof(int));
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 7 %s\n", cudaGetErrorString(err));
       goto EXIT;
     }
 
-  err = cudaMalloc((void **)&d_hash_values, 2 * total_size * sizeof(int));
+  err = cudaMalloc((void **)&d_hash_values, 10 * total_size * sizeof(int));
   if (err != cudaSuccess)
     {
       fprintf(stderr, "error code 8 %s\n", cudaGetErrorString(err));
@@ -412,6 +435,8 @@ int main(int argc, const char* argv[])
       goto EXIT;
     }
 
+  printf("Done\n");
+
 EXIT:
   fflush(stdout);
   if (vertices_ptr != NULL) delete[] vertices_ptr;
@@ -428,6 +453,8 @@ EXIT:
   if (d_chunk_level_ptr != NULL) cudaFree(d_chunk_level_ptr);
   if (d_chunk_ptr != NULL) cudaFree(d_chunk_ptr);
 
+  printf("Press any key\n");
+  _getch();
   return 0;
 }
 
