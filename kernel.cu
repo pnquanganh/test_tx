@@ -141,9 +141,19 @@ __global__ void test_build_hashtable(int num_levels,
 
       for (int data_ptr = start_level_ptr + global_warp_id; data_ptr < last_level_ptr; data_ptr += total_warps)
 	{
-	  int id = d_data[data_ptr];
-	  int first_vertex = d_vertices_ptr[id];
-	  int last_vertex = d_vertices_ptr[id + 1];
+		int id = 0;
+	  int first_vertex = 0;
+	  int last_vertex = 0;
+
+	  if (local_warp_id == 0)
+	    {
+	      shared_vals[lane] = 0;
+	    }
+	  __syncthreads();
+
+	  id = d_data[data_ptr];
+	  first_vertex = d_vertices_ptr[id];
+	  last_vertex = d_vertices_ptr[id + 1];
 
 	  if (lane == 0)
 	    shared_vals[local_warp_id] = last_vertex - first_vertex;
@@ -158,23 +168,25 @@ __global__ void test_build_hashtable(int num_levels,
 
 	  __syncthreads();
 
-	  int start_loc = local_warp_id == 0 ? carried_val : shared_vals[local_warp_id - 1];
-	  carried_val = new_carried_val;
-	  for (int v = first_vertex + lane; v < last_vertex; v += 32)
-	    {
-	      int out_id = d_edges[v];
-	      d_tmp_output[start_loc + lane] = out_id;
-	    }
+	  int start_loc = 0;
 
-	  if (shared_vals[local_warp_id] / CHUNK_SIZE == chunk_id[0])
-	    {
-	      insert_hashtable(lane, hash_indices, hash_values, id, start_loc % CHUNK_SIZE);
-	    } 
-	  else if (start_loc / CHUNK_SIZE == chunk_id[0] && lane == 0)
-	    {
-	      next_chunk_id[0] = chunk_id[0] + 1;
-	      d_chunk_ptr[next_chunk_id[0]] = start_loc;
-	    }
+		start_loc = local_warp_id == 0 ? carried_val : shared_vals[local_warp_id - 1];
+		carried_val = new_carried_val;
+		for (int v = first_vertex + lane; v < last_vertex; v += 32)
+		{
+			int out_id = d_edges[v];
+			d_tmp_output[start_loc + lane] = out_id;
+		}
+
+		if (shared_vals[local_warp_id] / CHUNK_SIZE == chunk_id[0])
+		{
+			insert_hashtable(lane, hash_indices, hash_values, id, start_loc % CHUNK_SIZE);
+		} 
+		else if (start_loc / CHUNK_SIZE == chunk_id[0] && lane == 0)
+		{
+			next_chunk_id[0] = chunk_id[0] + 1;
+			d_chunk_ptr[next_chunk_id[0]] = start_loc;
+		}
 
 	  __syncthreads();
 
@@ -186,22 +198,23 @@ __global__ void test_build_hashtable(int num_levels,
 	      __syncthreads();
 
 	      if (threadIdx.x == 0)
-		chunk_id[0]++;
+			chunk_id[0]++;
 	      
 	      if (shared_vals[local_warp_id] / CHUNK_SIZE == next_chunk_id[0])
-		{
-		  insert_hashtable(lane, hash_indices, hash_values, id, start_loc % CHUNK_SIZE);
-		}
+			{
+			  insert_hashtable(lane, hash_indices, hash_values, id, start_loc % CHUNK_SIZE);
+			}
 	    }
 	}
 	__syncthreads();
 	flush_hashtable(hash_indices, hash_values, d_hash_indices, d_hash_values, chunk_id[0] * HASH_SIZE);
+	__syncthreads();
+	clean_hashtable(hash_indices, hash_values);
 	if (threadIdx.x == 0)
 	{
-		chunk_id[0]++;
-		d_chunk_level_ptr[level_id] = chunk_id[0];
+		next_chunk_id[0] = chunk_id[0] = chunk_id[0] + 1;
+		d_chunk_level_ptr[level_id + 1] = chunk_id[0];
 	}
-	__syncthreads();
     }
 }
 
